@@ -59,7 +59,10 @@
       position: absolute;
     }
   </style>
-  <div id="graph-container"></div>
+  <div class="buttons">
+    <button id="toggle-layout">Stop layout</button>
+    <div id="graph-container"></div>
+  </div>
 </div>
 <script>
 /**
@@ -76,16 +79,28 @@
  * configuration object. The plugin will just add the "graph" key to it
  * before the instanciation.
  */
- sigma.parsers.json('data/arctic.json', {
-    container: 'graph-container'
+var colors = ["#acea23","#b348d2","#7431a9","#4a78db", "#2ea8cc"];
+ sigma.parsers.json('data/fomo.json', {
+  container: 'graph-container'
 }, function(s) {
-     // Display the nodes on a circle:
+   // Display the nodes on a circle:
 s.graph.nodes().forEach(function(node, i, a) {
-  node.x = Math.cos(Math.PI * 2 * i / a.length);
-  node.y = Math.sin(Math.PI * 2 * i / a.length);
+node.x = Math.cos(Math.PI * 2 * i / a.length);
+node.y = Math.sin(Math.PI * 2 * i / a.length);
+node.color= colors[Math.floor(Math.random() * colors.length)];
 });
 
 // Start the layout:
-s.startForceAtlas2();
+s.startForceAtlas2({iterationsPerRender:10, scalingRatio: 5});
+});
+document.getElementById('toggle-layout').addEventListener('click', function() {
+  if ((s.supervisor || {}).running) {
+    console.log('kill');
+    s.killForceAtlas2();
+    document.getElementById('toggle-layout').innerHTML = 'Start layout';
+  } else {
+    s.startForceAtlas2({worker: true});
+    document.getElementById('toggle-layout').innerHTML = 'Stop layout';
+  }
 });
 </script>
