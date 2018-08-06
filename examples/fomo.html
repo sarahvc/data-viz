@@ -57,6 +57,7 @@
       left: 0;
       right: 0;
       position: absolute;
+      background-color: black;
     }
   </style>
   <div class="buttons">
@@ -79,20 +80,73 @@
  * configuration object. The plugin will just add the "graph" key to it
  * before the instanciation.
  */
-var colors = ["#acea23","#b348d2","#7431a9","#4a78db", "#2ea8cc"];
- sigma.parsers.json('data/fomo.json', {
+var N = 100;
+var colors = ["#0021ff","#5d00ff","#a500ff","#ff00b2"];
+//var colors = ["#acea23","#b348d2","#7431a9","#4a78db", "#2ea8cc"];
+
+sigma.utils.pkg('sigma.canvas.edges');
+sigma.canvas.edges.t = function(edge, source, target, context, settings) {
+  var color = edge.color,
+      prefix = settings('prefix') || '',
+      edgeColor = settings('edgeColor'),
+      defaultNodeColor = settings('defaultNodeColor'),
+      defaultEdgeColor = settings('defaultEdgeColor');
+
+  if (!color)
+    switch (edgeColor) {
+      case 'source':
+        color = source.color || defaultNodeColor;
+        break;
+      case 'target':
+        color = target.color || defaultNodeColor;
+        break;
+      default:
+        color = defaultEdgeColor;
+        break;
+    }
+
+  context.strokeStyle = color;
+  context.lineWidth = edge[prefix + 'size'] || 1;
+  context.beginPath();
+  context.moveTo(
+    source[prefix + 'x'],
+    source[prefix + 'y']
+  );
+  context.lineTo(
+    source[prefix + 'x'],
+    target[prefix + 'y']
+  );
+  context.lineTo(
+    target[prefix + 'x'],
+    target[prefix + 'y']
+  );
+  context.stroke();
+};
+
+
+sigma.parsers.json('data/fomo.json', {
   container: 'graph-container'
 }, function(s) {
    // Display the nodes on a circle:
 s.graph.nodes().forEach(function(node, i, a) {
-node.x = Math.cos(Math.PI * 2 * i / a.length);
-node.y = Math.sin(Math.PI * 2 * i / a.length);
-node.color= colors[Math.floor(Math.random() * colors.length)];
+  node.x = Math.random();
+  node.y = Math.random();
+  //node.x = Math.cos(2 * i * Math.PI / N);
+  //node.y = Math.sin(2 * i * Math.PI / N);
+  // node.x = Math.cos(Math.PI * 2 * i / a.length);
+  // node.y = Math.sin(Math.PI * 2 * i / a.length);
+  node.color = colors[Math.floor(Math.random() * colors.length)];
+});
+
+s.graph.edges().forEach(function(edge, i, a) {
+  edge.size = Math.random(),
+  edge.type = 't';
 });
 
 // Start the layout:
-s.startForceAtlas2({iterationsPerRender:10, scalingRatio: 5});
-});
+ s.startForceAtlas2({iterationsPerRender:10, scalingRatio: 5, adjustSizes: true});
+ });
+
 document.getElementById('toggle-layout').addEventListener('click', function() {
   if ((s.supervisor || {}).running) {
     console.log('kill');
